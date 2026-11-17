@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Push-to-talk DS4 controller for Herdr and Claude Code."""
+import argparse
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import uuid
+
+from speech import transcribe
+
+ROOT = Path(__file__).resolve().parent
+BUTTONS = "l1 r1 l2 r2 cross circle triangle square share options l3 r3 touchpad ps".split()
+
+
+def options():
+    parser = argparse.ArgumentParser(description=__doc__)
+    target = parser.add_mutually_exclusive_group()
+    target.add_argument("--herdr", metavar="AGENT", help="live Herdr agent name or pane ID")
+    target.add_argument("--claude", action="store_true", help="new Claude Code conversation (default)")
+    target.add_argument("--preview", action="store_true", help="exercise the controls locally")
+    for action, default in [("talk", "l1"), ("send", "cross"), ("discard", "circle")]:
+        parser.add_argument("--" + action, choices=BUTTONS, type=str.lower, default=default)
+    parser.add_argument("--language", default="en", help="Whisper language, e.g. en, vi or auto")
+    parser.add_argument("--model", type=Path, default=os.environ.get("WHISPER_MODEL",
+                        "~/.local/share/whisper/ggml-large-v3-turbo-q5_0.bin"))
+    args = parser.parse_args()
+    if len({args.talk, args.send, args.discard}) != 3:
+        parser.error("talk, send and discard must use different buttons")
+    args.model = args.model.expanduser().resolve()
+    return args
+
+
+class Agent:
+    def __init__(self, args):
+        self.herdr = args.herdr
+        self.preview = args.preview
+        self.session = str(uuid.uuid4())
+        self.started = False
+
+    def send(self, draft):
+        if self.preview:
+            print("Preview only. No agent received this prompt.")
+        elif self.herdr:
+            subprocess.run(["herdr", "agent", "prompt", self.herdr, draft], check=True)
+        else:
+            print("Claude is responding…", flush=True)
+            flag = "--resume" if self.started else "--session-id"
+            subprocess.run(["claude", "-p", flag, self.session], input=draft, text=True, check=True)
+            self.started = True
+
+
+def main():
+    args = options()
+    for program in ["whisper-cli"] + ([] if args.preview else ["herdr" if args.herdr else "claude"]):
+        if not shutil.which(program):
+            sys.exit(f"Missing executable: {program}. See README.md for setup.")
+    if not args.model.is_file():
+        sys.exit(f"Whisper model missing: {args.model}. Set --model to a whisper.cpp GGML file.")
+    destination = "local preview" if args.preview else f"Claude Code in {Path.cwd()}"
+    if args.herdr:
+        lookup = subprocess.run(["herdr", "agent", "get", args.herdr], capture_output=True, text=True)
+        if lookup.returncode:
+            sys.exit(lookup.stderr.strip() or f"Herdr could not resolve {args.herdr}. See herdr agent list.")
+        info = json.loads(lookup.stdout)["result"]["agent"]
+        destination = f"{info['agent']} in {info['cwd']} ({info['pane_id']})"
+    subprocess.run(["make", "-s", "-C", str(ROOT), ".build/ds4-mic"], check=True)
+    agent = Agent(args)
+    print(f"Target: {destination}", flush=True)
+    if not (args.herdr or args.preview):
+        print(f"After the first turn, reopen this chat with: claude --resume {agent.session}")
+    draft = ""
+    while True:
+        with tempfile.TemporaryDirectory(prefix="ds4-vibe-") as folder:
+            status = subprocess.run([str(ROOT / ".build/ds4-mic"), "--agent-input",
+                                     args.talk, args.send, args.discard], cwd=folder).returncode
+            if status == 0:
+                print("Transcribing locally…", flush=True)
+                # A new take replaces the previous draft, including on recognition failure.
+                draft = ""
+                try:
+                    draft = transcribe(Path(folder) / "take.wav", args.model, args.language)
+                except (OSError, subprocess.CalledProcessError) as exc:
+                    print(f"Transcription failed: {exc}", file=sys.stderr)
+                print(f"Draft: {draft}" if draft else "No transcript. Hold the talk button to retry.")
+            elif status == 10:
+                if draft:
+                    try:
+                        agent.send(draft)
+                    except subprocess.CalledProcessError as exc:
+                        print(f"Submission returned {exc.returncode}. Draft retained. Check the target before retrying.")
+                    else:
+                        draft = ""
+                        print("Ready for the next prompt.")
+                else:
+                    print("No draft to send.")
+            elif status == 11:
+                draft = ""
+                print("Draft discarded.")
+            elif status == 12:
+                draft = ""
+            else:
+                if draft:
+                    print(f"Unsent draft: {draft}", file=sys.stderr)
+                return status if status > 0 else 1
+            sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
+    except (OSError, subprocess.CalledProcessError) as error:
+        sys.exit(str(error))

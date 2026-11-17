@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src blob:; connect-src 'none'"
+    />
+    <title>DualShock Playground</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="pad.js"></script>
+    <script defer src="ui.js"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <h1>Controller playground</h1>
+        <span id="connection" role="status">Connecting…</span>
+      </header>
+      <div class="desk">
+        <section class="stage" aria-label="Live controller monitor">
+          <div class="stage-head">
+            <h2>DUALSHOCK 4</h2>
+            <span>BLUETOOTH</span>
+          </div>
+          <canvas id="pad" aria-label="DualShock 4 controller diagram"></canvas>
+          <div class="readout">
+            <span class="lamp"></span
+            ><output id="buttons">Waiting for controller</output>
+          </div>
+        </section>
+        <aside>
+          <h2>Button guide</h2>
+          <div id="guide"></div>
+          <div class="last">
+            <h3 id="last-heading">Last prompt</h3>
+            <p id="last">Your submitted prompt will appear here.</p>
+          </div>
+        </aside>
+      </div>
+      <section class="composer">
+        <div class="compose-head">
+          <h2>Voice prompt</h2>
+          <span class="mic" id="mic" role="status">Headset idle</span>
+        </div>
+        <label class="sr" for="draft">Editable voice prompt</label
+        ><textarea
+          id="draft"
+          placeholder="Hold L1 to dictate, or type a prompt…"
+          spellcheck="true"
+        ></textarea>
+        <div class="toolbar">
+          <label
+            >Language<select id="language">
+              <option value="en">English</option>
+              <option value="vi">Vietnamese</option>
+              <option value="auto">Auto-detect</option>
+            </select></label
+          >
+          <label
+            >Destination<select id="target">
+              <option value="">Local preview</option>
+            </select></label
+          ><button
+            id="refresh"
+            title="Refresh Herdr agents"
+            aria-label="Refresh Herdr agents"
+          >
+            ↻
+          </button>
+          <div class="actions">
+            <button id="clear">Clear</button
+            ><button id="submit" class="primary">Preview prompt</button>
+          </div>
+        </div>
+        <div id="notice" role="status"></div>
+        <section class="recording" aria-labelledby="take-title">
+          <div class="recording-head">
+            <h3 id="take-title">Last recording</h3>
+            <select id="take-source" aria-label="Playback source" disabled>
+              <option value="adjusted">Whisper input</option>
+              <option value="original">Original headset</option>
+            </select>
+          </div>
+          <audio id="take-audio" controls preload="metadata" aria-label="Play last recording"></audio>
+          <p id="take-stats">Record a phrase to hear it through your Mac’s current audio output.</p>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

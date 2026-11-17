@@ -1,0 +1,6 @@
+.build/
+ds4-*.wav
+DualShock Playground.app/
+__pycache__/
+Herdr Pad.app/
+.DS_Store

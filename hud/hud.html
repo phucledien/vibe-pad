@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:"
+    />
+    <title>Herdr Pad</title>
+    <link rel="stylesheet" href="hud.css" />
+    <script defer src="hud.js"></script>
+  </head>
+  <body class="full">
+    <div id="toasts" aria-live="polite"></div>
+    <main id="hud">
+      <header>
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 40 40"><use href="#g-triangle" x="0" y="0" width="20" height="20" /><use href="#g-circle" x="20" y="0" width="20" height="20" /><use href="#g-cross" x="0" y="20" width="20" height="20" /><use href="#g-square" x="20" y="20" width="20" height="20" /></svg>
+        </div>
+        <h1>HERDR<span>PAD</span></h1>
+        <div class="links">
+          <span id="link-pad" class="link">PAD</span>
+          <span id="link-herdr" class="link">HERDR</span>
+          <span id="lang" class="lang">EN</span>
+        </div>
+      </header>
+
+      <section class="worlds">
+        <div class="row-label">WORLD</div>
+        <div id="workspaces" class="chips"></div>
+      </section>
+      <section class="stages">
+        <div class="row-label">STAGE</div>
+        <div id="tabs" class="chips small"></div>
+      </section>
+
+      <section class="map">
+        <div id="minimap"></div>
+      </section>
+
+      <section class="target">
+        <div class="row-label">TARGET</div>
+        <div id="target-label">—</div>
+        <div id="target-status" class="badge">—</div>
+      </section>
+
+      <section id="voice" class="voice idle">
+        <div class="mic"><i></i></div>
+        <div class="voice-body">
+          <div id="voice-title">Hold <b class="key">L1</b> to talk · tap <b class="key">R1</b> hands-free</div>
+          <div id="voice-sub"></div>
+        </div>
+        <div id="voice-timer"></div>
+      </section>
+      <section id="draft" hidden>
+        <div class="row-label">HELD DRAFT</div>
+        <p id="draft-text"></p>
+        <div class="draft-hint"><svg class="glyph"><use href="#g-cross" /></svg> send <svg class="glyph"><use href="#g-circle" /></svg> discard</div>
+      </section>
+
+      <section id="legend" class="legend"></section>
+    </main>
+
+    <svg class="defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <symbol id="g-cross" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" class="ring" /><path d="M6 6 L14 14 M14 6 L6 14" class="mark cross" /></symbol>
+        <symbol id="g-circle" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" class="ring" /><circle cx="10" cy="10" r="4.6" class="mark circle" /></symbol>
+        <symbol id="g-square" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" class="ring" /><rect x="5.6" y="5.6" width="8.8" height="8.8" class="mark square" /></symbol>
+        <symbol id="g-triangle" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" class="ring" /><path d="M10 5 L15 13.6 L5 13.6 Z" class="mark triangle" /></symbol>
+        <symbol id="g-dpad" viewBox="0 0 20 20"><path d="M7.5 2h5v5.5h5.5v5h-5.5V18h-5v-5.5H2v-5h5.5z" class="dpad" /></symbol>
+      </defs>
+    </svg>
+  </body>
+</html>
